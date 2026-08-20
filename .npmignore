@@ -1,0 +1,21 @@
+# Verified experimentally: npm's packer does not apply .gitignore/.npmignore
+# exclusions to anything matched by a package.json `files` entry — a bare
+# directory or a glob in `files` ships its full contents regardless of any
+# ignore file. The real defense against shipping skills/.venv/,
+# skills/biomedparse/BiomedParse/ (a live git clone), and
+# skills/biomedparse/weights/ (~1.7GB) is package.json's `files` array
+# enumerating real source files individually instead of listing "skills" as
+# a directory. This file is not load-bearing for packaging; it stays for
+# tools that read .npmignore for other purposes, and to mirror .gitignore.
+node_modules/
+*.log
+.DS_Store
+
+skills/.venv/
+skills/.uv-constraints.txt
+skills/**/__pycache__/
+
+skills/biomedparse/BiomedParse/
+skills/biomedparse/weights/
+
+tests/

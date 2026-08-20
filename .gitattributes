@@ -1,0 +1,6 @@
+# Keep GitHub language stats focused on runtime source.
+tests/** linguist-vendored
+scripts/** linguist-vendored
+
+# Treat generated documentation media as non-source.
+assets/*.svg linguist-generated=true

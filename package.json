@@ -1,0 +1,88 @@
+{
+  "name": "dsh-medomni",
+  "version": "0.2.0",
+  "description": "Medical imaging specialist tools for deepseek-harness: MAIRA-2 and MedGemma report generation for chest X-ray/CT/MRI/retinal (fundus) images, TotalSegmentator organ segmentation, BiomedCLIP zero-shot ultrasound classification, and BiomedParse text-prompted segmentation across X-ray, CT, MRI, ultrasound, and retinal (fundus) images.",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "dsh-medomni": "./lib/doctor-cli.js"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json",
+    "./cordis.patch.yml": "./cordis.patch.yml"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "ADDING_TOOLS.md",
+    "cordis.patch.yml",
+    "lib",
+    "skills/_bootstrap.py",
+    "skills/biomedparse/__init__.py",
+    "skills/biomedparse/_core.py",
+    "skills/xray/maira2_report.py",
+    "skills/xray/medgemma_anatomy_localization.py",
+    "skills/xray/medgemma_longitudinal.py",
+    "skills/xray/medgemma_report.py",
+    "skills/xray/biomedparse_segmentation.py",
+    "skills/medgemma_3d/__init__.py",
+    "skills/medgemma_3d/_core.py",
+    "skills/ct/medgemma_report.py",
+    "skills/ct/totalseg_segmentation.py",
+    "skills/ct/biomedparse_segmentation.py",
+    "skills/mri/medgemma_report.py",
+    "skills/mri/totalseg_segmentation.py",
+    "skills/mri/biomedparse_segmentation.py",
+    "skills/ultrasound/biomedparse_segmentation.py",
+    "skills/ultrasound/biomedclip_classify.py",
+    "skills/retinal/biomedparse_segmentation.py",
+    "skills/retinal/medgemma_report.py"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/medfm-flare/dsh-medomni.git"
+  },
+  "homepage": "https://github.com/medfm-flare/dsh-medomni/tree/main",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test tests/**/*.test.js"
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh-plugin",
+    "radiology",
+    "chest-x-ray",
+    "ct-scan",
+    "medical-imaging",
+    "segmentation",
+    "ultrasound",
+    "retinal-imaging"
+  ],
+  "dsh": {
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-ui-tool"
+      ],
+      "platform": "web"
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-client-runtime": ">=0.1.0-rc.5",
+    "@deepseek-ai/dsh-client-ui-tool": ">=0.1.0-rc.5",
+    "@deepseek-ai/dsh-llm": ">=0.1.0-rc.6",
+    "@deepseek-ai/dsh-tools": ">=0.1.0-rc.5",
+    "react": "^18.2.0"
+  },
+  "devDependencies": {
+    "@deepseek-ai/dsh-tools": "^0.1.0-rc.6"
+  }
+}

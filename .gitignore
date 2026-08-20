@@ -1,0 +1,18 @@
+node_modules/
+*.log
+.DS_Store
+
+# The first skills/ script to run re-execs itself into one shared venv (see
+# README's "Is setup automated?") and writes a torch-version pin next to it —
+# neither belongs in version control.
+skills/.venv/
+skills/.uv-constraints.txt
+skills/**/__pycache__/
+
+# BiomedParse's own cloned repo and downloaded weights (~1.5GB) — fetched by
+# skills/biomedparse/_core.py on first use, same as skills/.venv/ above.
+skills/biomedparse/BiomedParse/
+skills/biomedparse/weights/
+
+# Segmentation previews written into the session workspace by skills output.
+dsh-medomni/previews/
