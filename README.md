@@ -40,17 +40,47 @@ Each tool shells out to a Python script that self-manages its own shared virtual
 
 ## Requirements
 
+Prepare these items before installing the plugin:
+
 - A DeepSeek Harness `dsh` installation.
-- **An NVIDIA GPU with CUDA.** These are multi-GB vision-language and segmentation models — CPU (`gpu: -1`, where a tool exposes it) works but is slow enough to be impractical for anything beyond a quick smoke test.
-- [`uv`](https://docs.astral.sh/uv/), `git`, and Python 3 on `PATH` — every script bootstraps its own shared venv and, for BiomedParse, clones a repo and builds `detectron2` from source on first use.
-- Hugging Face access: accept the gated-model terms for [MAIRA-2 (`microsoft/maira-2`)](https://huggingface.co/microsoft/maira-2), [BiomedParse (`microsoft/BiomedParse`, including `biomedparse_v1.pt`)](https://huggingface.co/microsoft/BiomedParse), and [MedGemma (`google/medgemma-4b-it` / `google/medgemma-1.5-4b-it`)](https://huggingface.co/google/medgemma-1.5-4b-it), then set `HF_TOKEN` or run `hf auth login`. [BiomedCLIP](https://huggingface.co/microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224) is public.
-- Create a `HF_TOKEN` with read access at [Hugging Face settings](https://huggingface.co/settings/tokens), then export it with `export HF_TOKEN=hf_...` or run `hf auth login`.
-- Checkpoints download automatically on the first call to the corresponding tool; no manual model download is required.
-- Optional prefetch: after authenticating, run `hf download microsoft/maira-2`, `hf download microsoft/BiomedParse biomedparse_v1.pt`, `hf download microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224`, or the relevant `google/medgemma-*` command to download a checkpoint before inference.
+- **An NVIDIA GPU with CUDA.** CPU mode is available for some tools, but these multi-GB vision-language and segmentation models are generally impractical without a GPU.
+- [`uv`](https://docs.astral.sh/uv/), `git`, and Python 3 available on `PATH`. `uv` creates the isolated environment; `git` is used by BiomedParse on its first use.
+- Hugging Face access for the gated checkpoints: accept the terms for [MAIRA-2 (`microsoft/maira-2`)](https://huggingface.co/microsoft/maira-2), [BiomedParse (`microsoft/BiomedParse`)](https://huggingface.co/microsoft/BiomedParse), and [MedGemma](https://huggingface.co/google/medgemma-1.5-4b-it). [BiomedCLIP](https://huggingface.co/microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224) is public.
+- A Hugging Face read token. Create one at [Hugging Face settings](https://huggingface.co/settings/tokens), then either run `hf auth login` or export it with `export HF_TOKEN=hf_...`.
+
+No checkpoint needs to be downloaded manually. The required model downloads automatically when its tool is first used. Optional prefetch commands are documented below.
 
 ## Quick start
 
-### 1. Install the plugin
+Follow these steps in order.
+
+### 1. Check the prerequisites
+
+Confirm that the required commands are available:
+
+```sh
+python3 --version
+uv --version
+git --version
+```
+
+If `uv` is missing, install it using the [official uv instructions](https://docs.astral.sh/uv/getting-started/installation/). Install Python 3 and Git using your operating system's package manager if needed.
+
+### 2. Authenticate with Hugging Face
+
+After accepting the gated-model terms listed in [Requirements](#requirements), authenticate in the same shell or user account that will run DSH:
+
+```sh
+hf auth login
+```
+
+Alternatively:
+
+```sh
+export HF_TOKEN=hf_...
+```
+
+### 3. Install the plugin
 
 ```sh
 dsh plugin --profile web add github:medfm-flare/dsh-medomni
@@ -59,13 +89,34 @@ dsh plugin --profile web add github:medfm-flare/dsh-medomni
 
 This adds `dsh-medomni` to your profile's `package.json` and installs `cordis.patch.yml` (mounting the plugin under id `dsh-medomni`) automatically. Restart `dsh` (or your DSH Desktop/web session) afterward so the new bundle loads.
 
-### 2. Just ask, in plain text
+### 4. Prepare the MedOmni environment
+
+Run the setup command from the profile where the plugin was installed:
+
+```sh
+cd ~/.dsh/profiles/web
+./node_modules/.bin/dsh-medomni setup
+```
+
+This creates the shared Python environment and installs common dependencies. It does not install every model or the BiomedParse extras. Those remain lazy-loaded so users only download what they use.
+
+> [!NOTE]
+> **Optional: prefetch checkpoints.** Normal use downloads each required checkpoint automatically on first use. Run one of the following only if you want to download a checkpoint in advance, after authenticating with Hugging Face:
+
+```sh
+hf download microsoft/maira-2
+hf download microsoft/BiomedParse biomedparse_v1.pt
+hf download microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224
+hf download google/medgemma-1.5-4b-it
+```
+
+### 5. Ask, in plain text
 
 Nothing needs to be pre-built or downloaded first. Ask your agent something like:
 
 > "Generate a radiology report for this chest X-ray: `/path/to/chest_xray.png`"
 
-and it picks the matching tool itself. The first call for any given model/dependency group is slower — it creates the shared venv, downloads weights, and (for BiomedParse) clones a repo and builds `detectron2` — every call after that skips straight to inference. Run `dsh-medomni doctor` any time to see exactly how far setup has progressed (see [Troubleshooting](#troubleshooting)).
+and it picks the matching tool itself. The first call for a model/dependency group may still download its checkpoint; BiomedParse also clones its repo and builds `detectron2` on first use. Later calls reuse the downloaded files. Run `dsh-medomni doctor` any time to see setup progress (see [Troubleshooting](#troubleshooting)).
 
 ## Enable the vision route (paste an image)
 

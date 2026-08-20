@@ -30,28 +30,37 @@ BASE_PACKAGES = [
 ]
 
 
+def setup_venv(tag="setup"):
+    """Create the shared venv and install the common skill dependencies."""
+    if VENV_PYTHON.exists():
+        print(f"[{tag}] Shared venv already exists: {VENV_DIR}", file=sys.stderr)
+        return
+
+    print(f"[{tag}] Creating venv ...", file=sys.stderr)
+    subprocess.check_call([
+        "uv", "venv", "--system-site-packages",
+        "--python", sys.executable, str(VENV_DIR),
+    ])
+
+    try:
+        torch_pin = f"torch=={importlib.metadata.version('torch')}"
+    except importlib.metadata.PackageNotFoundError:
+        torch_pin = None
+    CONSTRAINTS_FILE.write_text(f"{torch_pin}\n" if torch_pin else "")
+
+    subprocess.check_call([
+        "uv", "pip", "install", "--python", str(VENV_PYTHON),
+        "--constraint", str(CONSTRAINTS_FILE), *BASE_PACKAGES,
+    ])
+    print(f"[{tag}] Venv ready.", file=sys.stderr)
+
+
 def ensure_venv_and_reexec(tag):
     if sys.executable == str(VENV_PYTHON):
         return
 
     if not VENV_PYTHON.exists():
-        print(f"[{tag}] Creating venv ...", file=sys.stderr)
-        subprocess.check_call([
-            "uv", "venv", "--system-site-packages",
-            "--python", sys.executable, str(VENV_DIR),
-        ])
-
-        try:
-            torch_pin = f"torch=={importlib.metadata.version('torch')}"
-        except importlib.metadata.PackageNotFoundError:
-            torch_pin = None
-        CONSTRAINTS_FILE.write_text(f"{torch_pin}\n" if torch_pin else "")
-
-        subprocess.check_call([
-            "uv", "pip", "install", "--python", str(VENV_PYTHON),
-            "--constraint", str(CONSTRAINTS_FILE), *BASE_PACKAGES,
-        ])
-        print(f"[{tag}] Venv ready.", file=sys.stderr)
+        setup_venv(tag)
 
     os.execv(str(VENV_PYTHON), [str(VENV_PYTHON)] + sys.argv)
 
@@ -71,3 +80,10 @@ def ensure_extra_packages(tag, marker_name, packages, extra_install_args=None):
     subprocess.check_call(cmd)
     marker.write_text("ok\n")
     print(f"[{tag}] {marker_name} ready.", file=sys.stderr)
+
+
+if __name__ == "__main__":
+    if sys.argv[1:] != ["--setup"]:
+        print("Usage: python _bootstrap.py --setup", file=sys.stderr)
+        raise SystemExit(2)
+    setup_venv()

@@ -5,7 +5,8 @@
   "type": "module",
   "main": "index.js",
   "bin": {
-    "dsh-medomni": "./lib/doctor-cli.js"
+    "dsh-medomni": "./lib/doctor-cli.js",
+    "dsh-medomni-setup": "./lib/setup.js"
   },
   "exports": {
     ".": "./index.js",
