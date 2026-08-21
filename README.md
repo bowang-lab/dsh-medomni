@@ -5,6 +5,8 @@
   <img src="assets/preview_workflow.svg" width="100%" alt="dsh-medomni workflow: a user request is routed by the DeepSeek Harness agent to a modality-specific tool (X-ray, CT, MRI, ultrasound, retinal), backed by MAIRA-2 / MedGemma / TotalSegmentator / BiomedParse / BiomedCLIP running in one shared Python venv, returning a structured result plus a preview image." />
 </p>
 
+<p align="right"><sub><em>Figure preparation assisted by ChatGPT.</em></sub></p>
+
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-2EA44F?style=flat-square" alt="License: MIT" /></a>
   <a href="package.json"><img src="https://img.shields.io/badge/Node.js-%3E%3D22-339933?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node.js >=22" /></a>
@@ -23,7 +25,7 @@ https://github.com/user-attachments/assets/8a098d95-8d24-44bd-8435-67e52450c524
 - [Demo](#demo)
 - [Requirements](#requirements)
 - [Quick start](#quick-start)
-- [Enable the vision route (paste an image)](#enable-the-vision-route-paste-an-image)
+- [Enable image input for pasted images](#enable-image-input-for-pasted-images)
 - [Usage examples](#usage-examples)
 - [Tools](#tools)
 - [Adding a new tool](#adding-a-new-tool)
@@ -36,7 +38,14 @@ https://github.com/user-attachments/assets/8a098d95-8d24-44bd-8435-67e52450c524
 
 ## What this plugin does
 
-Each tool shells out to a Python script that self-manages its own shared virtual environment and downloads its own model weights on first use — no manual setup beyond what's listed in [Requirements](#requirements). One tool call in, one structured JSON result plus a preview image out. See the diagram at the top of this page for the full path from a chat message to a report/segmentation/classification result.
+dsh-medomni is a preview implementation of the MedOmni strategy for medical image analysis. It gives a language-model agent a modality-specific set of tools so it can select an appropriate workflow from a natural-language request:
+
+- **Report generation:** Generate candidate reports for chest X-ray, CT, MRI, and retinal images; compare current and prior chest X-rays for interval change.
+- **Localization:** Ground suspected chest X-ray findings with evidence boxes, locate named chest X-ray findings, and label normal chest X-ray anatomy.
+- **Segmentation:** Generate masks and overlays for prompted findings or structures in X-ray, ultrasound, retinal images, CT NIfTI volumes, and MRI NIfTI volumes; perform fixed-label anatomical segmentation on CT and MRI volumes.
+- **Classification:** Classify ultrasound images to support a classification-first workflow before targeted localization.
+- **Agent-guided routing:** Select reporting, classification, localization, or segmentation tools from a natural-language request and return structured results with preview images.
+- **Input handling:** Paste supported 2D images through the image-enabled provider route or supply them by path. Supply 3D CT/MRI studies by filesystem path; NIfTI is supported by all 3D tools, while DICOM directories are supported by the report and fixed-label segmentation tools.
 
 ## Requirements
 
@@ -118,18 +127,27 @@ Nothing needs to be pre-built or downloaded first. Ask your agent something like
 
 and it picks the matching tool itself. The first call for a model/dependency group may still download its checkpoint; BiomedParse also clones its repo and builds `detectron2` on first use. Later calls reuse the downloaded files. Run `dsh-medomni doctor` any time to see setup progress (see [Troubleshooting](#troubleshooting)).
 
-## Enable the vision route (paste an image)
+## Enable image input for pasted images
 
-Tools that take a 2D image (X-ray, ultrasound, retinal, and the classification/report tools) also accept a **pasted image** instead of a filesystem path — but only on the right model route.
+Tools that take a 2D image (X-ray, ultrasound, retinal, and the classification/report tools) also accept a **pasted image** instead of a filesystem path — but only when the selected provider route declares image input.
 
 > [!IMPORTANT]
 > **Before pasting an image, open the model selector in the lower-right corner of the chat composer and choose the entry marked "+ dsh-medomni Vision".**
 >
-> DSH rejects a pasted image on a text-only route (e.g. plain DeepSeek chat-completions) before any plugin sees it, because that route's catalog declares text-only input. dsh-medomni registers a `<provider>-dsh-medomni` twin route for every live provider that declares image input (e.g. `deepseek-official-dsh-medomni`, shown as "DeepSeek + dsh-medomni Vision" in the picker) — pick the twin, then paste normally. The twin follows the live model catalog; no restart needed when models change in Settings.
+> DSH rejects a pasted image on a text-only provider route before any plugin sees it. dsh-medomni therefore adds an image-enabled route for each live provider. For example, `deepseek-official-dsh-medomni` appears as "DeepSeek + dsh-medomni Vision" in the picker. Select this route, then paste normally.
 
-What happens under the hood: the twin rewrites the pasted image into a compact attachment-id marker before handing the turn to your normal text model (the chat UI still shows the real image); the model passes that id straight to a dsh-medomni tool as `input`; the tool resolves it back to real bytes and hands a temp file path to the Python script. CT/MRI tools take NIfTI volumes or DICOM directories, so they always accept paths only — pasting doesn't apply there.
+<p align="center">
+  <img src="assets/vision-enable-route.png" width="100%" alt="DSH model selector showing the DeepSeek plus dsh-medomni Vision route selected" />
+</p>
 
-Set `wrapProviders: false` in the plugin config to disable the twin routes (see [Configure](#configure)).
+*Select the provider entry marked `+ dsh-medomni Vision` before pasting a 2D medical image.*
+
+The image-enabled route uses the same provider, model, and language model as the original route; it is not a second model. Its adapter changes the pasted image into an attachment identifier that the language model can pass to a dsh-medomni tool. The tool resolves that identifier to the image bytes and runs the selected medical-imaging model.
+
+> [!IMPORTANT]
+> **3D CT and MRI inputs must be provided as filesystem paths** to a NIfTI volume or DICOM directory. Pasted-image input is supported only for the plugin's 2D image tools; it does not apply to CT/MRI volume tools.
+
+Set `wrapProviders: false` in the plugin config to disable these image-enabled routes (see [Configure](#configure)).
 
 ## Usage examples
 
@@ -182,7 +200,7 @@ See [Adding a New Tool](ADDING_TOOLS.md) for the full step-by-step checklist and
   disabled: true
 ```
 
-Set it back to `false` (or remove the line) to re-enable. Unloading removes the tools, the vision twin routes, and the settings surface; anything already written to the session workspace remains.
+Set it back to `false` (or remove the line) to re-enable. Unloading removes the tools, the image-enabled routes, and the settings surface; anything already written to the session workspace remains.
 
 ## Configure
 
@@ -195,8 +213,8 @@ Nothing is required — the plugin defaults to the `skills/` directory shipped i
         skillsDir: /path/to/other/skills   # optional, default: this package's own skills/
         # pythonBin: python3               # optional, default "python3"
         # timeoutMs: 1800000                # optional, default 30 minutes
-        # wrapProviders: true              # optional, default true — image-capable
-        #                                  #   "<provider>-dsh-medomni" twin routes
+        # wrapProviders: true              # optional, default true — adds image-enabled
+        #                                  #   "<provider>-dsh-medomni" routes
         # excludedProviders: []            # optional — provider ids never wrapped
 ```
 
