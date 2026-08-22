@@ -174,7 +174,7 @@ For a pasted X-ray, ultrasound, or retinal image, select the `+ dsh-medomni Visi
 ## Tools
 
 <p align="center">
-  <img src="assets/tools_overview.svg" width="100%" alt="Overview of dsh-medomni's 15 tools across X-ray, CT, MRI, ultrasound, and retinal (fundus), grouped by report generation, segmentation, and classification, each naming its backing model." />
+  <img src="assets/tools_preview.svg" width="100%" alt="Overview of dsh-medomni's 15 tools across X-ray, CT, MRI, ultrasound, and retinal (fundus), grouped by report generation, segmentation, and classification, each naming its backing model." />
 </p>
 
 ## Adding a new tool
