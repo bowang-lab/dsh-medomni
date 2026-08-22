@@ -353,6 +353,12 @@ def serialise_prediction(prediction, frontal_size: tuple, processor) -> dict:
             "findings": None,
         }
  
+    # A grounded generation can legitimately contain no parsed sentences.
+    # Normalize that result so the JSON contract remains stable and the
+    # preview/summary paths do not try to iterate over None.
+    if prediction is None:
+        prediction = []
+
     # PIL .size is (W, H) — adjust_box_for_original_image_size takes (box, width, height)
     width, height = frontal_size
  
@@ -539,7 +545,7 @@ def main():
     elif args.mode == "grounded_report":
         print(f"Findings: {result['n_findings']} sentences | "
               f"{result['n_with_boxes']} with bounding boxes", file=sys.stderr)
-        for f in pred_dict["findings"]:
+        for f in pred_dict["findings"] or []:
             box_str = str(f["boxes_original"]) if f["boxes_original"] else "—"
             print(f"  {box_str}  {f['text']}", file=sys.stderr)
     elif args.mode == "phrase_grounding":

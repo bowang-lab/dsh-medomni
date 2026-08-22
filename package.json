@@ -1,6 +1,6 @@
 {
   "name": "dsh-medomni",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Medical imaging specialist tools for deepseek-harness: MAIRA-2 and MedGemma report generation for chest X-ray/CT/MRI/retinal (fundus) images, TotalSegmentator organ segmentation, BiomedCLIP zero-shot ultrasound classification, and BiomedParse text-prompted segmentation across X-ray, CT, MRI, ultrasound, and retinal (fundus) images.",
   "type": "module",
   "main": "index.js",
@@ -28,25 +28,50 @@
     "skills/xray/medgemma_longitudinal.py",
     "skills/xray/medgemma_report.py",
     "skills/xray/biomedparse_segmentation.py",
+    "skills/xray/SKILL.md",
     "skills/medgemma_3d/__init__.py",
     "skills/medgemma_3d/_core.py",
     "skills/ct/medgemma_report.py",
     "skills/ct/totalseg_segmentation.py",
     "skills/ct/biomedparse_segmentation.py",
+    "skills/ct/SKILL.md",
     "skills/mri/medgemma_report.py",
     "skills/mri/totalseg_segmentation.py",
     "skills/mri/biomedparse_segmentation.py",
+    "skills/mri/SKILL.md",
     "skills/ultrasound/biomedparse_segmentation.py",
     "skills/ultrasound/biomedclip_classify.py",
+    "skills/ultrasound/SKILL.md",
     "skills/retinal/biomedparse_segmentation.py",
-    "skills/retinal/medgemma_report.py"
+    "skills/retinal/medgemma_report.py",
+    "skills/retinal/SKILL.md"
   ],
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/medfm-flare/dsh-medomni.git"
+    "url": "git+https://github.com/bowang-lab/dsh-medomni.git"
   },
-  "homepage": "https://github.com/medfm-flare/dsh-medomni/tree/main",
+  "homepage": "https://github.com/bowang-lab/dsh-medomni/tree/main",
+  "disclosure": {
+    "cloud": false,
+    "network": [
+      "https://huggingface.co"
+    ],
+    "offlineMode": true,
+    "apiKeys": [
+      {
+        "env": "HF_TOKEN",
+        "storage": "process-environment"
+      }
+    ],
+    "permissions": [
+      "read:medical-image-inputs",
+      "read:HF_TOKEN",
+      "write:temporary-files-and-preview-artifacts"
+    ],
+    "jurisdiction": [],
+    "retention": "session"
+  },
   "engines": {
     "node": ">=22"
   },
@@ -80,6 +105,7 @@
     "@deepseek-ai/dsh-client-runtime": ">=0.1.0-rc.5",
     "@deepseek-ai/dsh-client-ui-tool": ">=0.1.0-rc.5",
     "@deepseek-ai/dsh-llm": ">=0.1.0-rc.6",
+    "@deepseek-ai/dsh-skill": ">=0.1.0-rc.8",
     "@deepseek-ai/dsh-tools": ">=0.1.0-rc.5",
     "react": "^18.2.0"
   },

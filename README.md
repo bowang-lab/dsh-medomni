@@ -47,6 +47,8 @@ dsh-medomni is a preview implementation of the MedOmni strategy for medical imag
 - **Agent-guided routing:** Select reporting, classification, localization, or segmentation tools from a natural-language request and return structured results with preview images.
 - **Input handling:** Paste supported 2D images through the image-enabled provider route or supply them by path. Supply 3D CT/MRI studies by filesystem path; NIfTI is supported by all 3D tools, while DICOM directories are supported by the report and fixed-label segmentation tools.
 
+**Data and network disclosure:** Model inference runs locally on the configured machine. The plugin connects to Hugging Face to download model checkpoints and uses `HF_TOKEN` only for gated model access; the token is read from the process environment and is not stored by the plugin. Input files and generated previews are read from or written to the local filesystem and are retained according to the surrounding DSH session. The behavior of the selected DSH language-model provider is controlled by DSH and its provider configuration, not by this plugin.
+
 ## Requirements
 
 Prepare these items before installing the plugin:
@@ -92,7 +94,7 @@ export HF_TOKEN=hf_...
 ### 3. Install the plugin
 
 ```sh
-dsh plugin --profile web add github:medfm-flare/dsh-medomni
+dsh plugin --profile web add github:bowang-lab/dsh-medomni
 ```
 
 
@@ -134,7 +136,7 @@ Tools that take a 2D image (X-ray, ultrasound, retinal, and the classification/r
 > [!IMPORTANT]
 > **Before pasting an image, open the model selector in the lower-right corner of the chat composer and choose the entry marked "+ dsh-medomni Vision".**
 >
-> DSH rejects a pasted image on a text-only provider route before any plugin sees it. dsh-medomni therefore adds an image-enabled route for each live provider. For example, `deepseek-official-dsh-medomni` appears as "DeepSeek + dsh-medomni Vision" in the picker. Select this route, then paste normally.
+> DSH rejects a pasted image on a text-only provider route before any plugin sees it. dsh-medomni therefore adds an image-enabled route for 2D medical images, which appears as "DeepSeek + dsh-medomni Vision" in the picker. Select this route (as shown in the below image), then paste normally.
 
 <p align="center">
   <img src="assets/vision-enable-route.png" width="100%" alt="DSH model selector showing the DeepSeek plus dsh-medomni Vision route selected" />
@@ -183,15 +185,21 @@ calls `xray_longitudinal_comparison` with both images.
   <img src="assets/tools_overview.svg" width="100%" alt="Overview of dsh-medomni's 15 tools across X-ray, CT, MRI, ultrasound, and retinal (fundus), grouped by report generation, segmentation, and classification, each naming its backing model." />
 </p>
 
-`_totalseg` and `_biomedparse` on the same modality are complementary: TotalSegmentator segments a fixed list of named structures with no text prompt; BiomedParse segments whatever free-text prompt you give it, at the cost of needing you to name what you're looking for.
-
-Every tool also attaches one or more preview PNGs to its result — inline in the chat on an image-capable route, or saved under `dsh-medomni/previews/` in the session workspace on a text-only route.
-
 ## Adding a new tool
 
 New tools should follow the existing pattern: a Python script under `skills/<modality>/`, a `SCRIPTS` entry plus `defineTool` registration in `index.js`, explicit agent-facing instructions in the tool `description`, optional preview attachment support, and package/test updates.
 
 See [Adding a New Tool](ADDING_TOOLS.md) for the full step-by-step checklist and examples.
+
+## Modality skills
+
+dsh-medomni registers these modality workflows as model-invocable DSH skills. The agent can load the relevant skill when a request requires modality-specific tool sequencing; the existing tool descriptions remain the direct tool-selection contract.
+
+- [Chest X-ray](skills/xray/SKILL.md)
+- [CT](skills/ct/SKILL.md)
+- [MRI](skills/mri/SKILL.md)
+- [Ultrasound](skills/ultrasound/SKILL.md)
+- [Retinal imaging](skills/retinal/SKILL.md)
 
 ## Disable / re-enable
 

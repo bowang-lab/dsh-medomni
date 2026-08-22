@@ -4,10 +4,11 @@ import { readFile, mkdir, copyFile } from 'node:fs/promises'
 import { basename, join } from 'node:path'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { resolveImageInput } from './lib/attachment-input.js'
+import { registerModalitySkills } from './lib/modality-skills.js'
 import { applyVisionRoutes } from './lib/vision-route.js'
 
 export const name = 'dsh-medomni'
-export const inject = ['tools', 'llm']
+export const inject = ['tools', 'llm', 'skills']
 
 /**
  * @typedef {object} Config
@@ -470,6 +471,8 @@ export function apply(ctx, config = {}) {
   const skillsDir = config.skillsDir ?? `${PACKAGE_DIR}skills`
   const pythonBin = config.pythonBin ?? 'python3'
   const timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS
+
+  registerModalitySkills(ctx, skillsDir)
 
   const run = (relScript, args, signal) => {
     const scriptPath = `${skillsDir}/${relScript}`
