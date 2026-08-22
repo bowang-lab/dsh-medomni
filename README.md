@@ -151,33 +151,25 @@ The image-enabled route uses the same provider, model, and language model as the
 
 Set `wrapProviders: false` in the plugin config to disable these image-enabled routes (see [Configure](#configure)).
 
-## Usage examples
+### Input examples
 
-**Chest X-ray report:**
-> "Generate a radiology report for this chest X-ray: `/path/to/chest_xray.png`"
+**3D CT/MRI — filesystem path required:**
 
-calls `xray_report_medgemma`, `xray_report_maira`, or `xray_grounded_report_maira` when finding evidence/bounding boxes are useful.
+```text
+Analyze this 3D scan: /path/to/scan.nii.gz
+```
 
-**Find something specific, by name, on any of the five modalities:**
-> "Segment the gallstone in this ultrasound image."
-> "Are there any microaneurysms in this fundus photo?"
+You can also provide a DICOM directory path for tools that support DICOM input.
 
-calls the matching `_segmentation_biomedparse` tool only when you ask for segmentation, masks, overlays, or localization. BiomedParse takes any free-text finding or anatomical structure, but its mask is localization, not diagnosis.
+**2D image — filesystem path or pasted image:**
 
-**Disambiguate a vague ultrasound request first:**
-> "What's in this ultrasound before you segment anything?"
+```text
+Analyze this chest X-ray: /path/to/chest_xray.png
+```
 
-calls `ultrasound_classify_biomedclip` to narrow down anatomy/pathology, then a segmentation tool with the winning label as the prompt.
+For a pasted X-ray, ultrasound, or retinal image, select the `+ dsh-medomni Vision` route, paste the image directly into the composer, and ask your question in the same message.
 
-**Whole-body organ segmentation on a CT or MRI volume:**
-> "Segment the liver and kidneys in this CT scan: `/path/to/scan.nii.gz`"
 
-calls `ct_segmentation_totalseg` for the fixed anatomical-structure list, or `ct_segmentation_biomedparse` if you'd rather name a pathology than an organ.
-
-**Prior-vs-current comparison:**
-> "Compare this current chest X-ray to the prior one and describe interval change."
-
-calls `xray_longitudinal_comparison` with both images.
 
 ## Tools
 
